@@ -28,7 +28,7 @@
                                     <td><a href="{{ route('spendings.index', $task->id) }}">{{ $task->spending_name }}</a></td>
                                     <td><span>{{ number_format($task->total_amount) }}</span></td>
                                 </tr>
-                            @endforeach
+                        @endforeach
 
                         </tbody>
                     </table>
