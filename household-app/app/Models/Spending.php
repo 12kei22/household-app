@@ -17,18 +17,14 @@ class Spending extends Model
         '雑費',
     ];
 
-    const SPENDING_STATUS_CLASS = [
-        'bg-danger',
-        'bg-primary',
-        'bg-success',
-        'bg-secondary',
-    ];
 
     protected $fillable = [
+        'task_id',
         'project_id',
         'spending_name',
         'due_date',
         'spending_amount',
+        'spending_category'
     ];
 
     /**
@@ -47,14 +43,14 @@ class Spending extends Model
     /**
      * 進捗のテキスト用アクセサ
      */
-    public function getTaskStatusStringAttribute()
+    public function getSpendingStatusStringAttribute()
     {
-        $taskStatus = $this->attributes['spending_amount'];
+        $spendingCategory = $this->attributes['spending_category'];
 
-        if (!isset(self::SPENDING_STATUS_STRING[$taskStatus])) {
+        if (!isset(self::SPENDING_STATUS_STRING[$spendingCategory])) {
             return '';
         }
 
-        return self::SPENDING_STATUS_STRING[$taskStatus];
+        return self::SPENDING_STATUS_STRING[$spendingCategory];
     }
 }

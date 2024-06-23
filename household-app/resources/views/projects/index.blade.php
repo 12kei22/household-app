@@ -11,13 +11,13 @@
                 <div class="card">
                     <div class="card-header bg-dark text-light d-flex justify-content-between align-items-center">
                         <p class="mb-0 h5">支出月</p>
-
+                        <a href="{{ route('projects.create') }}" class="btn btn-primary">追加</a>
                     </div>
                     <table class="table table-hover mb-0">
                         <tbody class="text-center">
                             @foreach($projects as $project)
                               <tr>
-                                <td><a href="{{ route('tasks.index',$project->id) }}">{{ $project->project_name }}</a></td>
+                                <td><a href="{{ route('tasks.index',$project->id) }}">{{ $project->month_name }}</a></td>
                               </tr>
                             @endforeach
                         </tbody>

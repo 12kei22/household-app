@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use SebastianBergmann\CodeCoverage\Report\Xml\Project;
+use App\Models\Project;
 
 class Task extends Model
 {
@@ -18,18 +18,13 @@ class Task extends Model
         '雑費',
     ];
 
-    const TASK_STATUS_CLASS = [
-        'bg-danger',
-        'bg-primary',
-        'bg-success',
-        'bg-secondary',
-    ];
 
     protected $fillable = [
         'project_id',
         'spending_name',
         'due_date',
         'spending_amount',
+
     ];
 
     /**
@@ -50,14 +45,15 @@ class Task extends Model
      */
     public function getTaskStatusStringAttribute()
     {
-        $taskStatus = $this->attributes['spending_amount'];
+        $spendingName = array_search($this->attributes['spending_name'], self::TASK_STATUS_STRING);
 
-        if (!isset(self::TASK_STATUS_STRING[$taskStatus])) {
+        if ($spendingName === false) {
             return '';
         }
 
-        return self::TASK_STATUS_STRING[$taskStatus];
+        return self::TASK_STATUS_STRING[$spendingName];
     }
+
 
 
 }

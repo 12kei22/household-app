@@ -22,7 +22,8 @@ class StoreProjectRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'project_name' => 'required|max:30|string',
+            'project_name' => 'required|string|in:' . implode(',', \App\Models\Project::MONTH_NAME),
+
         ];
     }
 
@@ -30,6 +31,7 @@ class StoreProjectRequest extends FormRequest
     {
         return [
             'project_name' => 'プロジェクト名',
+
         ];
     }
 }

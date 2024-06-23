@@ -14,7 +14,12 @@ class ProjectController extends Controller
 {
     public function index()
     {
-        $projects = Auth::user()->projects->all();
+        $projects = Project::where('user_id', Auth::id())->get();
+
+        // Sort projects by MONTH_NAME order
+        $projects = $projects->sortBy(function($project) {
+            return array_search($project->project_name, Project::MONTH_NAME);
+        });
 
         return view('projects.index',compact('projects'));
     }
@@ -23,13 +28,17 @@ class ProjectController extends Controller
 
     public function create()
     {
-        return view('projects.create');
+        $monthNames = Project::MONTH_NAME;
+        $usedMonthNames = Project::where('user_id', Auth::id())->pluck('project_name')->toArray();
+
+        // 使用されていない月をフィルタリング
+        $availableMonthNames = array_diff($monthNames, $usedMonthNames);
+
+        return view('projects.create', compact('availableMonthNames'));
     }
 
-    public function create2()
-    {
-        return view('projects.create2');
-    }
+
+
 
     public function store(StoreProjectRequest $request)
     {
@@ -40,6 +49,7 @@ class ProjectController extends Controller
             $project = Project::create([
                 'project_name' => $request->project_name,
                 'user_id' => Auth::id(),
+
             ]);
 
             DB::commit();

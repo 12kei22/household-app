@@ -32,6 +32,7 @@ class StoreTaskRequest extends FormRequest
         return [
             'spending_name' => '支出名',
             'due_date' => '支出日',
+
         ];
     }
 

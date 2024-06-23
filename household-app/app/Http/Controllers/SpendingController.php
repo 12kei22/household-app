@@ -8,96 +8,84 @@ use App\Models\Spending;
 use App\Models\Task;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Session;
 use App\Http\Requests\UpdateSpendingRequest;
 use App\Http\Requests\StoreSpendingRequest;
 
 class SpendingController extends Controller
 {
-    public function index(Request $request, $id)
+    public function index(Request $request, $projectId, $taskId)
     {
-        // URLで送られてきたプロジェクトID
-        $currentProjectId = $id;
 
-        // プロジェクト取得
-        $project = Project::find($currentProjectId);
 
-        // プロジェクトに紐づく支出を取得
-        $spendings = $project->spendings;
 
-        $spending = $spendings->where('project_id', $currentProjectId)->first();
-        // プロジェクトごとの支出合計を計算
+        $project = Project::with(['tasks', 'spendings'])->find($projectId);
+        if (!$project) {
+            abort(404, 'Project not found');
+        }
+
+
+
+        $spendings = Spending::where('project_id', $projectId)
+                              ->where('task_id', $taskId)
+                              ->get();
+
+
         $totalAmount = $spendings->sum('spending_amount');
 
-        return view('spendings.index', compact(
-            'currentProjectId',
-            'spendings',
-            'spending',
-            'totalAmount',
-
-        ));
+        return view('spendings.index', compact('projectId','taskId', 'spendings', 'totalAmount'));
     }
 
-    public function create($id, $spendingId)
+    public function create($projectId, $taskId)
     {
-        $spending = Spending::find($spendingId);
 
-        $currentProjectId = $id;
+
+
         $spendingStatusStrings = Spending::SPENDING_STATUS_STRING;
 
         return view('spendings.create', compact(
-            'currentProjectId',
-            'spending',
-            'spendingStatusStrings',
+            'taskId',
+            'projectId',
+            'spendingStatusStrings'
         ));
     }
 
     /**
      * タスク作成処理
      */
-    public function store(StoreSpendingRequest $request, $id)
+    public function store(StoreSpendingRequest $request, $projectId, $taskId)
     {
-        // URLで送られてきたプロジェクトID
-        $currentProjectId = $id;
-
-        // トランザクション開始
-        DB::beginTransaction();
 
         try {
-            // タスク作成処理
+            DB::beginTransaction();
             $spending = Spending::create([
-                'project_id' => $currentProjectId,
+                'task_id' => $taskId,
+                'project_id' => $projectId,
                 'spending_name' => $request->spending_name,
                 'due_date' => $request->due_date,
+                'spending_amount' => $request->spending_amount,
+                'spending_category' => Spending::SPENDING_STATUS_STRING[$request->spending_category],
             ]);
-
-            // トランザクションコミット
             DB::commit();
+
+            $spendingId = $spending->id;
         } catch(\Exception $e) {
-            // トランザクションロールバック
             DB::rollBack();
-
-            // ログ出力
             Log::debug($e);
-
-            // エラー画面遷移
             abort(500);
         }
 
-        return redirect()->route('spendings.index', [
-            'id' => $currentProjectId,
-        ]);
+        return redirect()->route('spendings.index',['projectId' => $projectId, 'taskId' => $taskId]);
+
     }
 
 
 
-    public function edit($id, $spendingId)
+    public function edit($projectId, $taskId, $spendingId)
     {
 
 
-        $spending = Spending::find($spendingId);
 
-        $currentProjectId = $id;
+        $spending = Spending::find($spendingId);
         $spendingStatusStrings = Spending::SPENDING_STATUS_STRING;
 
 
@@ -105,17 +93,18 @@ class SpendingController extends Controller
         return view(
             'spendings.edit',
             compact(
+                'taskId',
                 'spending',
                 'spendingStatusStrings',
-                'currentProjectId' ,
+                'projectId',
+                'spendingId'
             )
         );
     }
 
-    public function update(Request $request, $id, $spendingId)
+    public function update(UpdateSpendingRequest  $request, $projectId, $taskId, $spendingId)
     {
 
-        $currentProjectId = $id;
 
 
         $spending = Spending::find($spendingId);
@@ -126,10 +115,12 @@ class SpendingController extends Controller
         try {
 
             $spending->fill([
-                'project_id' => $currentProjectId,
+                'task_id' => $taskId,
+                'project_id' =>  $projectId,
                 'spending_name' => $request->spending_name,
                 'spending_amount' => $request->spending_amount,
                 'due_date' => $request->due_date,
+                'spending_category' =>  Spending::SPENDING_STATUS_STRING[$request->spending_category],
             ]);
 
             $spending->save();
@@ -145,24 +136,27 @@ class SpendingController extends Controller
             abort(500);
         }
 
-        return redirect()->route('spendings.index', [
-            'id' => $currentProjectId,
-        ]);
+        return redirect()->route('spendings.index', ['projectId' => $projectId, 'taskId' => $taskId]);
 
 
     }
 
-    public function destroy($spendingId)
+    public function destroy($projectId, $taskId, $spendingId)
     {
 
         $spending = Spending::find($spendingId);
 
+        try {
+            DB::beginTransaction();
+            $spending->delete();
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage());
+            return redirect()->route('spendings.index', ['projectId' => $projectId, 'taskId' => $taskId])->withErrors('Spending deletion failed');
+        }
 
-
-        $spending->delete();
-
-
-        return redirect()->route('spendings.index');
+        return redirect()->route('spendings.index', ['projectId' => $projectId, 'taskId' => $taskId]);
     }
 
 }

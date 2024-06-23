@@ -11,7 +11,10 @@
                 <div class="card">
                     <div class="card-header bg-dark text-light d-flex justify-content-between align-items-center">
                         <p class="mb-0 h5">支出一覧</p>
-                        <a href="{{ route('tasks.create', $currentProjectId) }}" class="btn btn-primary">追加</a>
+                        <div class="d-flex">
+                            <a href="{{ route('projects.index') }}" style="margin-right: 10px;" class="btn btn-danger">戻る</a>
+                            <a href="{{ route('tasks.create', $projectId) }}" class="btn btn-primary">追加</a>
+                        </div>
                     </div>
                     <table class="table table-hover mb-0">
                         <thead class="text-light" style="background-color: rgb(106, 106, 106)">
@@ -25,8 +28,8 @@
 
                         @foreach ($tasksWithTotalAmount as $task)
                                 <tr>
-                                    <td><a href="{{ route('spendings.index', $task->id) }}">{{ $task->spending_name }}</a></td>
-                                    <td><span>{{ number_format($task->total_amount) }}</span></td>
+                                    <td><a href="{{ route('spendings.index', ['projectId' => $projectId, 'taskId' => $task->id]) }}">{{ $task->task_status_string }}</a></td>
+                                    <td><span>{{ $task->total_amount }}</span></td>
                                 </tr>
                         @endforeach
 
